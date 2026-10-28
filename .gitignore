@@ -82,3 +82,8 @@ riscos/\!OSupaplex/data
 
 /ps2/OpenSupaplex
 ps2/OpenSupaplex-ps2.zip
+
+# PS5 stuff
+ps5/build/
+ps5/*.elf
+ps5/OpenSupaplex-ps5.zip

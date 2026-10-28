@@ -33,6 +33,9 @@ static const int kWindowHeight = 544;
 #elif defined(__PSL1GHT__) || defined(__WIIU__)
 static const int kWindowWidth = 1280;
 static const int kWindowHeight = 720;
+#elif defined(__PROSPERO__)
+static const int kWindowWidth = 1920;
+static const int kWindowHeight = 1080;
 #else
 static const int kWindowWidth = kScreenWidth * 4;
 static const int kWindowHeight = kScreenHeight * 4;
@@ -64,7 +67,7 @@ void initializeVideo(uint8_t fastMode)
                                SDL_WINDOWPOS_UNDEFINED,
                                kWindowWidth,
                                kWindowHeight,
-#if defined(__SWITCH__) || defined(__vita__) || defined(__PSP__) || defined(__PSL1GHT__) || defined(__WIIU__) || defined(__PS2__)
+#if defined(__SWITCH__) || defined(__vita__) || defined(__PSP__) || defined(__PSL1GHT__) || defined(__WIIU__) || defined(__PS2__) || defined(__PROSPERO__)
                                SDL_WINDOW_FULLSCREEN);
 #else
                                0);
@@ -80,7 +83,13 @@ void initializeVideo(uint8_t fastMode)
     SDL_SetWindowResizable(gWindow, SDL_TRUE);
     SDL_AddEventWatch(windowResizingEventWatcher, gWindow);
 
+#ifdef __PROSPERO__
+    // The PS5 SDL port draws through a software framebuffer
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+    Uint32 rendererFlags = SDL_RENDERER_SOFTWARE;
+#else
     Uint32 rendererFlags = SDL_RENDERER_ACCELERATED;
+#endif
 
     // Disable vsync in fast mode to prevent limiting FPS rate
     if (fastMode == 0)

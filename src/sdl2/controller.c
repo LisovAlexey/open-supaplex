@@ -196,7 +196,12 @@ uint8_t getGameControllerButtonY(void)
 
 uint8_t getGameControllerButtonBack(void)
 {
+#ifdef __PROSPERO__
+    // The Create button is reserved by the PS5 system, use the touchpad instead
+    return getGameControllerButton(SDL_CONTROLLER_BUTTON_TOUCHPAD);
+#else
     return getGameControllerButton(SDL_CONTROLLER_BUTTON_BACK);
+#endif
 }
 
 uint8_t getGameControllerButtonStart(void)

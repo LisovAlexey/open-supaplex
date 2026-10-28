@@ -25,6 +25,7 @@ Other than that, **OpenSupaplex** can be built for any of the following platform
 - PS Vita
 - PlayStation 2
 - PlayStation 3
+- PlayStation 5 (jailbroken, see [ps5/README.md](ps5/README.md))
 - Nintendo DS
 - Nintendo 3DS
 - Nintendo Wii

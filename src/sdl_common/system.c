@@ -35,11 +35,62 @@
 #include <3ds.h>
 #endif
 
+#ifdef __PROSPERO__
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #include "../globals.h"
 #include "../logging.h"
 
+#ifdef __PROSPERO__
+// Homebrew launchers start the game from its own folder, but raw ELF loaders
+// don't, so look for the game data in the usual homebrew locations.
+static void changeToDataDirectory(void)
+{
+    struct stat st;
+    char path[64];
+
+    if (stat("GFX.DAT", &st) == 0)
+    {
+        return;
+    }
+
+    for (int i = -1; i < 16; ++i)
+    {
+        if (i < 0)
+        {
+            snprintf(path, sizeof(path), "/data/homebrew/OpenSupaplex");
+        }
+        else if (i < 8)
+        {
+            snprintf(path, sizeof(path), "/mnt/usb%d/homebrew/OpenSupaplex", i);
+        }
+        else
+        {
+            snprintf(path, sizeof(path), "/mnt/ext%d/homebrew/OpenSupaplex", i - 8);
+        }
+
+        char gfxPath[80];
+        snprintf(gfxPath, sizeof(gfxPath), "%s/GFX.DAT", path);
+
+        if (stat(gfxPath, &st) == 0 && chdir(path) == 0)
+        {
+            spLogInfo("Using game data from %s", path);
+            return;
+        }
+    }
+
+    spLogInfo("Could not find the game data folder");
+}
+#endif
+
 void initializeSystem(void)
 {
+#ifdef __PROSPERO__
+    changeToDataDirectory();
+#endif
+
     int ret = SDL_Init(SDL_INIT_TIMER);
     if (ret)
     {
