@@ -84,6 +84,8 @@ static const char *kBaseAudioFolder = "/<OpenSupaplex$Dir>/audio";
 static const char *kBaseAudioFolder = "/apps/OpenSupaplex/audio";
 #elif defined(__WIIU__)
 static const char *kBaseAudioFolder = "fs:/vol/external01/wiiu/apps/OpenSupaplex/audio";
+#elif defined(__PROSPERO__) && defined(PS5_APP)
+static const char *kBaseAudioFolder = "/app0/assets/audio";
 #else
 static const char *kBaseAudioFolder = "audio";
 #endif

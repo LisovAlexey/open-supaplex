@@ -1,10 +1,25 @@
 # OpenSupaplex for PlayStation 5
 
-This port runs as a homebrew payload on a **jailbroken** PS5. It is built with
-the [ps5-payload-sdk](https://github.com/ps5-payload-dev/sdk) and its
-[SDL2 port](https://github.com/ps5-payload-dev/SDL).
+There are two builds for **jailbroken** PS5s, both using the
+[ps5-payload-sdk](https://github.com/ps5-payload-dev/sdk) and its
+[SDL2 port](https://github.com/ps5-payload-dev/SDL):
 
-## Installing
+- `OpenSupaplex-ps5-app.zip`: an app folder (`PPSA90100`) with `eboot.bin` and
+  `sce_sys/param.json`, for [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus).
+  It shows up on the home screen like a regular game.
+- `OpenSupaplex-ps5.zip`: an ELF payload for the websrv homebrew launcher.
+
+## Installing the app (ShadowMountPlus)
+
+1. Extract `OpenSupaplex-ps5-app.zip` and copy the `PPSA90100` folder to
+   `/data/homebrew/PPSA90100` or to `homebrew/PPSA90100` on a USB drive.
+2. Wait for ShadowMountPlus to pick it up (a notification is shown), then start
+   OpenSupaplex from the home screen.
+
+The game data is read from `/app0/assets/`; saves and settings are stored in
+`/download0/`.
+
+## Installing the payload (websrv)
 
 1. Jailbreak your PS5 and start [elfldr](https://github.com/ps5-payload-dev/elfldr)
    and [websrv](https://github.com/ps5-payload-dev/websrv) (or a jailbreak
@@ -47,6 +62,16 @@ The build needs Docker (or an Ubuntu 24.04 machine with the packages from
 ```
 
 This produces `ps5/eboot.elf` and `ps5/OpenSupaplex-ps5.zip`.
+
+The app version is built the same way with `ps5-app` instead of `ps5`:
+
+```sh
+./ps5/ci-docker-run.sh bash -c "./ps5-app/ci-prepare.sh && ./ps5-app/ci-build.sh"
+```
+
+It produces `ps5-app/OpenSupaplex-ps5-app.zip`, packaged by
+[ps5-native-app-boilerplate](https://github.com/drakmor/ps5-native-app-boilerplate)
+(see `ps5-app/build.sh`).
 
 With the SDK already installed in `/opt/ps5-payload-sdk`:
 

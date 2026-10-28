@@ -87,3 +87,5 @@ ps2/OpenSupaplex-ps2.zip
 ps5/build/
 ps5/*.elf
 ps5/OpenSupaplex-ps5.zip
+ps5-app/build/
+ps5-app/OpenSupaplex-ps5-app.zip

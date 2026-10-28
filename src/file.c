@@ -177,6 +177,9 @@ FILE *openWritableFile(const char *pathname, const char *mode)
 #define FILE_BASE_PATH "/apps/OpenSupaplex/"
 #elif defined(__WIIU__)
 #define FILE_BASE_PATH "fs:/vol/external01/wiiu/apps/OpenSupaplex/"
+#elif defined(__PROSPERO__) && defined(PS5_APP)
+#define FILE_BASE_PATH "/app0/assets/"
+#define FILE_BASE_WRITABLE_PATH "/download0/"
 #else
 #define FILE_BASE_PATH ""
 #endif

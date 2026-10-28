@@ -14,6 +14,7 @@ This document is generated from `.github/platform-builds.json`.
 | PlayStation 2 | SDL2 | Makefile | `ps2` | Yes | No |
 | PlayStation 3 | SDL2 | Makefile | `ps3` | Yes | Yes |
 | PlayStation 5 | SDL2 | Makefile | `ps5` | Yes | Yes |
+| PlayStation 5 (app) | SDL2 | Makefile | `ps5-app` | Yes | Yes |
 | Nintendo DS | SDL1 | Makefile | `nds` | Yes | Yes |
 | Nintendo 3DS | SDL1 | Makefile | `3ds` | Yes | Yes |
 | Wii | SDL1 | Makefile | `wii` | Yes | Yes |

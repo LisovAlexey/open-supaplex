@@ -43,7 +43,7 @@
 #include "../globals.h"
 #include "../logging.h"
 
-#ifdef __PROSPERO__
+#if defined(__PROSPERO__) && !defined(PS5_APP)
 // Homebrew launchers start the game from its own folder, but raw ELF loaders
 // don't, so look for the game data in the usual homebrew locations.
 static void changeToDataDirectory(void)
@@ -87,7 +87,7 @@ static void changeToDataDirectory(void)
 
 void initializeSystem(void)
 {
-#ifdef __PROSPERO__
+#if defined(__PROSPERO__) && !defined(PS5_APP)
     changeToDataDirectory();
 #endif
 

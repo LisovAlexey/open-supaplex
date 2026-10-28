@@ -98,6 +98,18 @@
     "release_asset_name": "OpenSupaplex-ps5-{version}.zip"
   },
   {
+    "id": "ps5-app",
+    "name": "PlayStation 5 (app)",
+    "port_dir": "ps5-app",
+    "backend": "SDL2",
+    "build_system": "Makefile",
+    "runs_on": "ubuntu-24.04",
+    "build_command": "./ps5/ci-docker-run.sh bash -c \"./ps5-app/ci-prepare.sh && ./ps5-app/ci-build.sh\"",
+    "artifact_name": "ps5-app-build",
+    "artifact_path": "ps5-app/OpenSupaplex-ps5-app.zip",
+    "release_asset_name": "OpenSupaplex-ps5-app-{version}.zip"
+  },
+  {
     "id": "nds",
     "name": "Nintendo DS",
     "port_dir": "nds",
