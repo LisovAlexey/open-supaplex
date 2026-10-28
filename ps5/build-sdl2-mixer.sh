@@ -2,6 +2,8 @@
 # The SDL2_mixer that ships with the PS5 payload SDK has no MOD/XM support,
 # which OpenSupaplex needs for its music. Rebuild it with libmodplug (which
 # the SDK already provides) and install it next to this script.
+# External music commands are disabled: they need fork(), which native PS5
+# apps can't import.
 
 set -e
 
@@ -38,7 +40,7 @@ unset DESTDIR
             --disable-music-mod-modplug-shared --disable-music-mod-xmp \
             --disable-music-midi-fluidsynth --disable-music-opus \
             --disable-music-flac-libflac --disable-music-mp3-mpg123 \
-            --disable-music-wavpack \
+            --disable-music-wavpack --disable-music-cmd \
             MODPLUG_CFLAGS="-I${PS5_SYSROOT}${PS5_HBROOT}/include/libmodplug -DMODPLUG_STATIC" \
             MODPLUG_LIBS="-L${PS5_SYSROOT}${PS5_HBROOT}/lib -lmodplug"
 ${MAKE} -j"$(nproc)"

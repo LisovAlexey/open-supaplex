@@ -25,6 +25,7 @@
 #endif
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef __NDS__
 #include <stdbool.h>
@@ -85,10 +86,143 @@ static void changeToDataDirectory(void)
 }
 #endif
 
+#if defined(__PROSPERO__) && defined(PS5_APP)
+#include <stdlib.h>
+#include <sys/mman.h>
+
+int sceKernelAvailableFlexibleMemorySize(size_t *size);
+
+// Native PS5 apps only get a ~13 MB libc heap, which SDL's 8 MB framebuffers
+// don't fit in. SDL's allocations go through this allocator instead: big
+// blocks are mapped straight from the much larger flexible memory budget.
+
+#define kLargeAllocationThreshold (256 * 1024)
+#define kAllocationMagicHeap 0x48454150 // 'HEAP'
+#define kAllocationMagicMapped 0x4d415050 // 'MAPP'
+
+typedef struct
+{
+    size_t size; // requested size
+    size_t mappedSize; // 0 for heap blocks
+    uint32_t magic;
+    uint32_t padding[3];
+} AllocationHeader; // 32 bytes, keeps the returned block 32-byte aligned
+
+static void *ps5Malloc(size_t size)
+{
+    AllocationHeader *header = NULL;
+
+    if (size >= kLargeAllocationThreshold)
+    {
+        size_t mappedSize = (size + sizeof(AllocationHeader) + 0x3fff) & ~(size_t)0x3fff;
+        void *mapped = mmap(NULL, mappedSize, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+        if (mapped == MAP_FAILED)
+        {
+            spLogInfo("mmap(%zu) failed", mappedSize);
+            return NULL;
+        }
+        header = mapped;
+        header->mappedSize = mappedSize;
+        header->magic = kAllocationMagicMapped;
+    }
+    else
+    {
+        header = malloc(size + sizeof(AllocationHeader));
+        if (header == NULL)
+        {
+            spLogInfo("malloc(%zu) failed", size);
+            return NULL;
+        }
+        header->mappedSize = 0;
+        header->magic = kAllocationMagicHeap;
+    }
+
+    header->size = size;
+    return header + 1;
+}
+
+static void ps5Free(void *block)
+{
+    if (block == NULL)
+    {
+        return;
+    }
+
+    AllocationHeader *header = (AllocationHeader *)block - 1;
+    if (header->magic == kAllocationMagicMapped)
+    {
+        header->magic = 0;
+        munmap(header, header->mappedSize);
+    }
+    else
+    {
+        header->magic = 0;
+        free(header);
+    }
+}
+
+static void *ps5Calloc(size_t count, size_t size)
+{
+    size_t total = count * size;
+    if (size != 0 && total / size != count)
+    {
+        return NULL;
+    }
+
+    void *block = ps5Malloc(total);
+    if (block != NULL)
+    {
+        memset(block, 0, total); // mapped memory is already zeroed, heap memory isn't
+    }
+    return block;
+}
+
+static void *ps5Realloc(void *block, size_t size)
+{
+    if (block == NULL)
+    {
+        return ps5Malloc(size);
+    }
+    if (size == 0)
+    {
+        ps5Free(block);
+        return NULL;
+    }
+
+    AllocationHeader *header = (AllocationHeader *)block - 1;
+    if (size <= header->size && (header->magic == kAllocationMagicHeap || size >= kLargeAllocationThreshold))
+    {
+        header->size = size;
+        return block;
+    }
+
+    void *newBlock = ps5Malloc(size);
+    if (newBlock != NULL)
+    {
+        memcpy(newBlock, block, header->size < size ? header->size : size);
+        ps5Free(block);
+    }
+    return newBlock;
+}
+
+void initializeAppMemory(void)
+{
+    // Must run before any other SDL call
+    SDL_SetMemoryFunctions(ps5Malloc, ps5Calloc, ps5Realloc, ps5Free);
+}
+
+#endif
+
 void initializeSystem(void)
 {
 #if defined(__PROSPERO__) && !defined(PS5_APP)
     changeToDataDirectory();
+#endif
+
+#if defined(__PROSPERO__) && defined(PS5_APP)
+    size_t flexibleMemory = 0;
+    sceKernelAvailableFlexibleMemorySize(&flexibleMemory);
+    spLogInfo("Available flexible memory: %zu MB", flexibleMemory / (1024 * 1024));
 #endif
 
     int ret = SDL_Init(SDL_INIT_TIMER);

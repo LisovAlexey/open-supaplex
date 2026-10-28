@@ -33,6 +33,12 @@
 #include <switch.h>
 #endif
 
+#if defined(__PROSPERO__) && defined(PS5_APP)
+// Native PS5 apps have no console to log to, so keep a log file that can be
+// fetched over FTP
+#define LOG_FILE_PATH "/data/opensupaplex.log"
+#endif
+
 LogLevel gLogLevel = LogLevelInfo;
 
 void setLogLevel(LogLevel logLevel)
@@ -42,6 +48,14 @@ void setLogLevel(LogLevel logLevel)
 
 void initializeLogging(void)
 {
+#ifdef LOG_FILE_PATH
+    FILE *logFile = fopen(LOG_FILE_PATH, "w");
+    if (logFile != NULL)
+    {
+        fclose(logFile);
+    }
+#endif
+
 #if USE_DEBUGNET
     debugNetInit(DEBUGNETIP, 18194, DEBUG);
 #endif
@@ -80,6 +94,15 @@ void spLog(LogLevel level, const char *format, ...)
     va_end(argptr);
 #if USE_DEBUGNET
     debugNetPrintf(INFO, "%s\n", buffer);
+#endif
+
+#ifdef LOG_FILE_PATH
+    FILE *logFile = fopen(LOG_FILE_PATH, "a");
+    if (logFile != NULL)
+    {
+        fprintf(logFile, "%s\n", buffer);
+        fclose(logFile);
+    }
 #endif
 
 #if HAVE_SDL2

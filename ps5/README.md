@@ -17,7 +17,24 @@ There are two builds for **jailbroken** PS5s, both using the
    OpenSupaplex from the home screen.
 
 The game data is read from `/app0/assets/`; saves and settings are stored in
-`/download0/`.
+`/download0/`. The game writes a log to `/data/opensupaplex.log`, which can be
+fetched over FTP when something goes wrong.
+
+Quitting from the game menu ends with a crash report from the system (native
+apps can't call `exit()` cleanly yet); close the game with the PS button
+instead. Launch it while no other homebrew is running: starting it during a
+game switch can leave ShadowMountPlus stuck until the console is restarted.
+
+Notes on the native app build (see `ps5-app/`):
+
+- Native apps can't load `libkernel_sys`, `libSceKeyboard` or
+  `libSceImeDialog`, so SDL's keyboard support is stubbed out and SDL_mixer is
+  built without external music commands. `build.sh` fails if any of these
+  modules sneaks back in.
+- The libc heap of a native app is only ~13 MB, so SDL allocates large blocks
+  with `mmap` from the flexible memory budget (`initializeAppMemory`).
+- `boilerplate-relro-offset.patch` fixes the boilerplate's ELF converter for
+  binaries that have `.data.rel.ro` before `.got` (SDL2 does).
 
 ## Installing the payload (websrv)
 
@@ -38,16 +55,29 @@ Saves, settings and the hall of fame are written to the game folder.
 
 ## Controls
 
-| DualSense       | In game                              | In menus             |
-| --------------- | ------------------------------------ | -------------------- |
-| D-pad / L-stick | Move                                 | Move cursor          |
-| Square          | Action (eat/push in place, red disk) |                      |
-| Cross           |                                      | Confirm              |
-| Circle          | Show number of red disks             | Cancel               |
-| Triangle        | Toggle game panel                    |                      |
-| Options         | Pause                                | Start                |
-| Touchpad click  | Exit level                           | Back                 |
-| L1 / R1         | Game speed down / up                 | Previous / next level set |
+In a level:
+
+| DualSense                 | Action                                               |
+| ------------------------- | ---------------------------------------------------- |
+| D-pad / left stick        | Move Murphy                                          |
+| Square + direction        | Eat/take the adjacent tile without moving, use a terminal |
+| Square (hold, no direction) | Drop a red disk                                    |
+| Circle                    | Show the number of red disks                         |
+| Triangle                  | Toggle the bottom panel                              |
+| Options                   | Pause                                                |
+| Touchpad click            | Exit the level                                       |
+| L1 / R1                   | Decrease / increase game speed                       |
+
+In menus:
+
+| DualSense          | Action                         |
+| ------------------ | ------------------------------ |
+| D-pad / left stick | Move the cursor                |
+| Cross              | Confirm                        |
+| Circle             | Cancel / back                  |
+| Options            | Start the level                |
+| L1 / R1            | Previous / next level set      |
+| Touchpad click     | Advanced options menu          |
 
 The Create button is reserved by the system, so the touchpad click takes the
 role of the Back/Select button used by other ports.

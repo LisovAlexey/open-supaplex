@@ -1513,6 +1513,10 @@ void runAdvancedOptionsRootMenu()
 
 int main(int argc, char *argv[])
 {
+#if defined(__PROSPERO__) && defined(PS5_APP)
+    initializeAppMemory();
+#endif
+
     parseCommandLineOptions(argc, argv);
 
     if (gFastMode == FastModeTypeUltra)

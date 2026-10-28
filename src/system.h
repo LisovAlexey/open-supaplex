@@ -31,4 +31,8 @@ void handleSystemEvents(void);
 uint32_t getTime(void);
 void waitTime(uint32_t time);
 
+#if defined(__PROSPERO__) && defined(PS5_APP)
+void initializeAppMemory(void);
+#endif
+
 #endif /* system_h */

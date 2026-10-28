@@ -51,3 +51,57 @@ char *osp_strcasestr(const char *haystack, const char *needle)
 
     return length == 0 ? (char *)haystack : NULL;
 }
+
+// SDL2's PS5 keyboard support needs libSceKeyboard and libSceImeDialog, which
+// native apps can't load. build.sh points SDL2 to these stubs instead, and SDL
+// ignores the errors and runs without a keyboard.
+
+int osp_sceKeyboardInit(void)
+{
+    return -1;
+}
+
+int osp_sceKeyboardOpen(int userId, int type, int index, void *param)
+{
+    (void)userId;
+    (void)type;
+    (void)index;
+    (void)param;
+    return -1;
+}
+
+int osp_sceKeyboardReadState(int handle, void *state)
+{
+    (void)handle;
+    (void)state;
+    return -1;
+}
+
+int osp_sceKeyboardClose(int handle)
+{
+    (void)handle;
+    return 0;
+}
+
+int osp_sceImeDialogInit(const void *param, void *extended)
+{
+    (void)param;
+    (void)extended;
+    return -1;
+}
+
+int osp_sceImeDialogGetStatus(void)
+{
+    return 0; // SCE_IME_DIALOG_STATUS_NONE
+}
+
+int osp_sceImeDialogGetResult(void *result)
+{
+    (void)result;
+    return -1;
+}
+
+int osp_sceImeDialogTerm(void)
+{
+    return 0;
+}

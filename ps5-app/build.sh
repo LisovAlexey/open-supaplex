@@ -25,6 +25,9 @@ if [ ! -d "${WORK_DIR}/.git" ]; then
 fi
 git -C "${WORK_DIR}" fetch -q origin "${BOILERPLATE_COMMIT}" || true
 git -C "${WORK_DIR}" checkout -q --force "${BOILERPLATE_COMMIT}"
+# Fixes the RELRO segment file offset when .data.rel.ro precedes .got (as in
+# SDL2); without it the PS5 refuses to start the app
+git -C "${WORK_DIR}" apply "${SCRIPT_DIR}/boilerplate-relro-offset.patch"
 
 # Replace the boilerplate's sample app with OpenSupaplex
 cd "${WORK_DIR}"
@@ -41,8 +44,16 @@ cp -R "${MIXER_DIR}/include" vendor/
 cp "${MIXER_DIR}/lib/libSDL2_mixer.a" vendor/lib/
 make pacbrew
 PACBREW_LIB_DIR=$(dirname "$(find .deps/pacbrew -path '*/user/homebrew/lib/libSDL2.a' -print -quit)")
-llvm-objcopy-18 --redefine-sym strcasestr=osp_strcasestr \
-    "${PACBREW_LIB_DIR}/libSDL2.a" vendor/lib/libSDL2.a
+# Point SDL2 at our shims for functions native apps can't import (see ps5AppShims.c)
+REDEFINE_SYMS=()
+for sym in strcasestr sceKeyboardInit sceKeyboardOpen sceKeyboardReadState sceKeyboardClose \
+           sceImeDialogInit sceImeDialogGetStatus sceImeDialogGetResult sceImeDialogTerm; do
+    REDEFINE_SYMS+=(--redefine-sym "${sym}=osp_${sym}")
+done
+llvm-objcopy-18 "${REDEFINE_SYMS[@]}" "${PACBREW_LIB_DIR}/libSDL2.a" vendor/lib/libSDL2.a
+
+# Fail early if the app would need a system module that games can't load
+BLOCKED_MODULES="libkernel_sys libkernel_web libSceKeyboard libSceImeDialog"
 
 cp "${SCRIPT_DIR}/param.json" sce_sys/param.json
 cp "${REPO_DIR}/ps5/assets/sce_sys/icon0.png" sce_sys/icon0.png
@@ -54,6 +65,13 @@ make APP_DEFINITIONS="HAVE_SDL2 PS5_APP NDEBUG _DEFAULT_SOURCE" \
      APP_STATIC_ARCHIVES="vendor/lib/libSDL2_mixer.a vendor/lib/libSDL2.a" \
      PACBREW_INCLUDE_PATHS="include/SDL2" \
      PACBREW_STATIC_ARCHIVES="lib/libmodplug.a lib/libsamplerate.a lib/libiconv.a"
+
+for module in ${BLOCKED_MODULES}; do
+    if llvm-readelf-18 -d build/eboot.elf | grep -q "\[${module}\.prx\]"; then
+        echo "error: eboot imports ${module}, which native apps can't load" >&2
+        exit 1
+    fi
+done
 
 cd "${WORK_DIR}/dist"
 rm -f "${SCRIPT_DIR}/OpenSupaplex-ps5-app.zip"
